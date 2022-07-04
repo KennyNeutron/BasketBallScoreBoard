@@ -44,23 +44,26 @@ bool ShotClock_IsPressed = false;
 bool StartStop_IsPressed = false;
 bool BallPos_IsPressed = false;
 
+bool WINNER = true; //true= HOME WINNER     false= GUEST WINNER     NOTE: only if the game is doene
+bool winner_avail = false; //goes true if a winner is declared;
+
 bool toggle1HZ = false;
 
 //Game Variables (RAW)
 byte TimeMin = 0; //GameTime Minute
-byte TimeSec = 30; //GameTime Second
-byte TimeMil = 0; //GameTime Millis
+byte TimeSec = 3; //GameTime Second
+byte TimeMil = 5; //GameTime Millis
 
 byte SC_sec = 24; //ShotClock Second
 byte SC_mil = 0; //ShotClock Millis
 
-byte HomeScore = 0; //HomeScore
-byte GuestScore = 0; //GuestScore
+byte HomeScore = 123; //HomeScore
+byte GuestScore = 124; //GuestScore
 
 byte HomeFoul = 0; //HomeFoul
 byte GuestFoul = 0; //GuestFoul
 
-byte period = 1; //Period or Quarter
+byte period = 4; //Period or Quarter
 
 byte BallPos = 0; //BallPosession 0=NoPossession 1=Home 2=Guest
 
@@ -75,11 +78,23 @@ bool flag_GFoulToggle = false;
 bool flag_HScoreToggle = false;
 bool flag_GScoreToggle = false;
 bool flag_BallPosToggle = false;
+bool flag_ChangeMenuToggle = false;
+bool flag_WinnerBlink = false;
+bool flag_NewGame=false;
 
 
 
 uint32_t last_millis = 0;
 uint32_t last_millis2 = 0;
+
+uint32_t last_millisWIN = 0; //for blinking (winner);
+uint16_t blink_period = 500; //blink period
+
+
+byte menu_screen = 0;
+byte menu_ToSet = 0;
+byte ms_counter = 0;  //for SHIFT + START/STOP
+byte ms_buzzer = 0; //for SHIFT + BUZZER
 
 
 void setup() {
@@ -131,24 +146,49 @@ void setup() {
 }
 
 void loop() {
-  if (SC_sec == 0 && SC_mil == 0 && flag_SCDisplayed == true && !flag_QFinishToggle) {
+  if (SC_sec == 0 && SC_mil == 0 && flag_SCDisplayed == true && !flag_QFinishToggle && !winner_avail) {
     tone(buzzer, 1000);
 
     flag_SCDisplayed = false;
     SC_sec = 24;
 
-    if (flag_QFinish == true) {
+    if (flag_QFinish == true && !winner_avail) {
       delay(6000);
       noTone(buzzer);
-      flag_QFinishToggle = true;
-      if (period != 5) {
-        period++;
+
+      if (period == 4 || period == 5) {
+        if (HomeScore != GuestScore) {
+          //There is a WINNER!
+          if (HomeScore > GuestScore) {
+            Serial.println("HOME WINS!");
+            WINNER = true;
+          } else if (GuestScore > HomeScore) {
+            Serial.println("GUEST WINS!");
+            WINNER = false;
+          }
+          winner_avail = true;
+        } else if (HomeScore == GuestScore) {
+          //It's a TIE! Go for OT
+          period = 5;
+        }
       }
-      TimeMin = 10;
-      TimeSec = 0;
-      TimeMil = 0;
-      SC_sec = 24;
-      SC_mil = 0;
+
+      flag_QFinishToggle = true;
+      if (period != 5 && !winner_avail) {
+        period++;
+        TimeMin = 10;
+        TimeSec = 0;
+        TimeMil = 0;
+        SC_sec = 24;
+        SC_mil = 0;
+      } else if (period == 5 && !winner_avail) {
+        TimeMin = 5;
+        TimeSec = 0;
+        TimeMil = 0;
+        SC_sec = 24;
+        SC_mil = 0;
+      }
+
       flag_QFinish = false;
       flag_QFinishToggle = false;
     } else {
@@ -171,8 +211,7 @@ void loop() {
     TimerStarted();
   }
 
-
-  if (TimeMin == 0 && TimeSec < SC_sec) {
+  if (TimeMin == 0 && TimeSec < SC_sec && menu_screen == 0) {
     SC_sec = TimeSec;
     SC_mil = TimeMil;
   }
@@ -180,30 +219,31 @@ void loop() {
 
   buttonUpdate();
 
+  switch (menu_screen) {
+    case 0:
+      if (!winner_avail) {
+        con_StartStop();//Start/Stop Button is Pressed
+        con_ShotClock();//ShotClock Button is Pressed
+        con_Buzzer();//Buzzer Button is Pressed
+        con_HomeFoul();//HomeFoul Button is Pressed
+        con_GuestFoul();//GuestFoul Button is Pressed
+        con_HScore();//HomeScore Button is Pressed
+        con_GScore();//GuestScore Button is Pressed
+        con_BallPos();//BallPos Button is Pressed
+      } else if (winner_avail == true) {
+        con_Buzzer();//Buzzer Button is Pressed
+      }
+      break;
 
-  //Start/Stop Button is Pressed
-  con_StartStop();
+    case 1:
+      con_StartStop();//Start/Stop Button is Pressed
+      con_ShotClock();//ShotClock Button is Pressed
+      con_BallPos();//BallPos Button is Pressed
+      con_HScore();//HomeScore Button is Pressed
+      con_GScore();//GuestScore Button is Pressed
+      break;
 
-  //ShotClock Button is Pressed
-  con_ShotClock();
-
-  //Buzzer Button is Pressed
-  con_Buzzer();
-
-  //HomeFoul Button is Pressed
-  con_HomeFoul();
-
-  //GuestFoul Button is Pressed
-  con_GuestFoul();
-
-  //HomeScore Button is Pressed
-  con_HScore();
-
-  //GuestScore Button is Pressed
-  con_GScore();
-
-  //BallPos Button is Pressed
-  con_BallPos();
+  }
 }
 
 void draw() {
@@ -251,4 +291,28 @@ void TimerStarted() {
   if (SC_sec == 0 && SC_mil == 0) {
     flag_start = false;
   }
+}
+
+
+void reset_AllVariables() {
+  TimeMin = 10; //GameTime Minute
+  TimeSec = 0; //GameTime Second
+  TimeMil = 0; //GameTime Millis
+
+  SC_sec = 24; //ShotClock Second
+  SC_mil = 0; //ShotClock Millis
+
+  HomeScore = 0; //HomeScore
+  GuestScore = 0; //GuestScore
+
+  HomeFoul = 0; //HomeFoul
+  GuestFoul = 0; //GuestFoul
+
+  period = 1; //Period or Quarter
+
+  BallPos = 0; //BallPosession 0=NoPossession 1=Home 2=Guest
+
+  winner_avail=false;
+
+
 }

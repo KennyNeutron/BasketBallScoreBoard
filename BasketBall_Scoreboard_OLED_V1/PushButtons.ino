@@ -1,13 +1,14 @@
 void buttonUpdate() {
   if (!StartStop_IsPressed && !status_StartStop()) {
-    delay(50);
     if (!status_StartStop()) {
       StartStop_IsPressed = true;
     }
   }
 
   if (!ShotClock_IsPressed && !status_ShotClock()) {
-    delay(50);
+    if (menu_screen == 0) {
+      delay(50);
+    }
     if (!status_ShotClock()) {
       ShotClock_IsPressed = true;
     }
@@ -15,6 +16,9 @@ void buttonUpdate() {
 
   if (!status_buzzer()) {
     buzzer_IsPressed = true;
+  } else {
+    buzzer_IsPressed = false;
+    ms_buzzer = 0;
   }
 
   if (!status_HFoul() && !flag_HFoulToggle) {
