@@ -1,5 +1,13 @@
 //Basketball Scoreboard by: Kenny Neutron
 //06-30-2022
+
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
+RF24 radio(9, 10); // CE, CSN
+const byte address[6] = "00001";
+
 #include <Wire.h>
 
 #include "U8glib.h"
@@ -67,6 +75,7 @@ byte period = 1; //Period or Quarter
 
 byte BallPos = 0; //BallPosession 0=NoPossession 1=Home 2=Guest
 
+bool buzz = false;
 bool flag_start = false;
 bool flag_SSToggle = false;
 bool flag_SCToggle = false;
@@ -97,6 +106,10 @@ byte ms_counter = 0;  //for SHIFT + START/STOP
 byte ms_buzzer = 0; //for SHIFT + BUZZER
 
 
+char ch_message[7] = "FFFFFF";
+
+uint16_t tcounter = 0;
+
 void setup() {
   // flip screen, if required
   // u8g.setRot180();
@@ -108,7 +121,12 @@ void setup() {
   //u8g.setHardwareBackup(u8g_backup_avr_spi);
 
   // assign default color value
-  Serial.begin(9600);
+  //Serial.begin(115200);
+
+  radio.begin();
+  radio.openWritingPipe(address);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.stopListening();
 
   if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
     u8g.setColorIndex(255);     // white
@@ -148,13 +166,17 @@ void setup() {
 void loop() {
   if (SC_sec == 0 && SC_mil == 0 && flag_SCDisplayed == true && !flag_QFinishToggle && !winner_avail) {
     tone(buzzer, 1000);
-
+    buzz = true;
     flag_SCDisplayed = false;
     SC_sec = 24;
 
     if (flag_QFinish == true && !winner_avail) {
-      delay(6000);
+      for (int a = 0; a <= 60; a++) {
+        delay(100);
+        NRF_Broadcast();
+      }
       noTone(buzzer);
+      buzz = false;
 
       if (period == 4 || period == 5) {
         if (HomeScore != GuestScore) {
@@ -198,8 +220,12 @@ void loop() {
       flag_QFinish = false;
       flag_QFinishToggle = false;
     } else {
-      delay(3000);
+      for (int a = 0; a <= 30; a++) {
+        delay(100);
+        NRF_Broadcast();
+      }
       noTone(buzzer);
+      buzz = false;
     }
 
   }
@@ -223,7 +249,17 @@ void loop() {
   }
 
 
+  NRF_Broadcast();
+
+  if (flag_start == true) {
+    TimerStarted();
+  }
+
   buttonUpdate();
+
+  if (flag_start == true) {
+    TimerStarted();
+  }
 
   switch (menu_screen) {
     case 0:
@@ -250,6 +286,7 @@ void loop() {
       break;
 
   }
+
 }
 
 void draw() {
@@ -258,13 +295,25 @@ void draw() {
 
   //display_guidelines();
   display_SB();
+}
 
+void NRF_Broadcast() {
+  DataEncrypt_Time();
+  //Serial.print(ch_message);
+  radio.write(&ch_message, sizeof(ch_message));
 
+  DataEncrypt_Other();
+  //Serial.print(ch_message);
+  radio.write(&ch_message, sizeof(ch_message));
+  delay(5);
+  radio.write(&ch_message, sizeof(ch_message));
+  delay(5);
+  radio.write(&ch_message, sizeof(ch_message));
 }
 
 void TimerStarted() {
   //Serial.println("act: " + String(millis() - last_millis));
-  if ((millis() - last_millis) >= 66) {
+  if ((millis() - last_millis) >= 75) {
     last_millis = millis();
     TimeMil--;
     SC_mil--;
@@ -319,6 +368,4 @@ void reset_AllVariables() {
   BallPos = 0; //BallPosession 0=NoPossession 1=Home 2=Guest
 
   winner_avail = false;
-
-
 }

@@ -1,7 +1,7 @@
 //Start/Stop Button is Pressed
 void con_StartStop() {
   if (StartStop_IsPressed == true && !flag_SSToggle && status_shift() && !flag_ChangeMenuToggle && menu_screen == 0) {
-    delay(50);
+    //delay(10);
     if (status_StartStop()) {
       goto ss_exit;
     }
@@ -20,7 +20,7 @@ ss_exit:
     if (status_StartStop()) {
       StartStop_IsPressed = false;
       flag_SSToggle = false;
-      delay(10);
+      //delay(10);
     }
     ms_counter = 0;
   } else if (StartStop_IsPressed == true && !status_shift() && !flag_start && !flag_ChangeMenuToggle) {
@@ -48,7 +48,7 @@ ss_exit:
     flag_ChangeMenuToggle = false;
     StartStop_IsPressed == false;
     flag_start = false;
-    delay(100);
+    //delay(10);
   }
 
 }
@@ -77,7 +77,7 @@ void con_ShotClock() {
     if (status_ShotClock()) {
       ShotClock_IsPressed = false;
       flag_SCToggle = false;
-      delay(50);
+      //delay(10);
     }
   }
 

@@ -7,7 +7,7 @@ void buttonUpdate() {
 
   if (!ShotClock_IsPressed && !status_ShotClock()) {
     if (menu_screen == 0) {
-      delay(50);
+      delay(10);
     }
     if (!status_ShotClock()) {
       ShotClock_IsPressed = true;
@@ -16,9 +16,11 @@ void buttonUpdate() {
 
   if (!status_buzzer()) {
     buzzer_IsPressed = true;
+    buzz=true;
   } else {
     buzzer_IsPressed = false;
     ms_buzzer = 0;
+    buzz=false;
   }
 
   if (!status_HFoul() && !flag_HFoulToggle) {
