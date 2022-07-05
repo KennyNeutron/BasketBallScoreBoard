@@ -50,20 +50,20 @@ bool winner_avail = false; //goes true if a winner is declared;
 bool toggle1HZ = false;
 
 //Game Variables (RAW)
-byte TimeMin = 0; //GameTime Minute
-byte TimeSec = 3; //GameTime Second
-byte TimeMil = 5; //GameTime Millis
+byte TimeMin = 10; //GameTime Minute
+byte TimeSec = 0; //GameTime Second
+byte TimeMil = 0; //GameTime Millis
 
 byte SC_sec = 24; //ShotClock Second
 byte SC_mil = 0; //ShotClock Millis
 
-byte HomeScore = 123; //HomeScore
-byte GuestScore = 124; //GuestScore
+byte HomeScore = 0; //HomeScore
+byte GuestScore = 0; //GuestScore
 
 byte HomeFoul = 0; //HomeFoul
 byte GuestFoul = 0; //GuestFoul
 
-byte period = 4; //Period or Quarter
+byte period = 1; //Period or Quarter
 
 byte BallPos = 0; //BallPosession 0=NoPossession 1=Home 2=Guest
 
@@ -80,7 +80,7 @@ bool flag_GScoreToggle = false;
 bool flag_BallPosToggle = false;
 bool flag_ChangeMenuToggle = false;
 bool flag_WinnerBlink = false;
-bool flag_NewGame=false;
+bool flag_NewGame = false;
 
 
 
@@ -160,10 +160,10 @@ void loop() {
         if (HomeScore != GuestScore) {
           //There is a WINNER!
           if (HomeScore > GuestScore) {
-            Serial.println("HOME WINS!");
+            //Serial.println("HOME WINS!");
             WINNER = true;
           } else if (GuestScore > HomeScore) {
-            Serial.println("GUEST WINS!");
+            //Serial.println("GUEST WINS!");
             WINNER = false;
           }
           winner_avail = true;
@@ -181,12 +181,18 @@ void loop() {
         TimeMil = 0;
         SC_sec = 24;
         SC_mil = 0;
+        HomeFoul = 0;
+        GuestFoul = 0;
+        BallPos = 0;
       } else if (period == 5 && !winner_avail) {
         TimeMin = 5;
         TimeSec = 0;
         TimeMil = 0;
         SC_sec = 24;
         SC_mil = 0;
+        HomeFoul = 0;
+        GuestFoul = 0;
+        BallPos = 0;
       }
 
       flag_QFinish = false;
@@ -312,7 +318,7 @@ void reset_AllVariables() {
 
   BallPos = 0; //BallPosession 0=NoPossession 1=Home 2=Guest
 
-  winner_avail=false;
+  winner_avail = false;
 
 
 }

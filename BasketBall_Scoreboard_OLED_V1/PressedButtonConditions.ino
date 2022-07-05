@@ -91,7 +91,7 @@ void con_Buzzer() {
   if (buzzer_IsPressed == true && !flag_start && !flag_NewGame) {
     if (!status_shift()) {
       ms_buzzer++;
-      Serial.println("bz: " + String(ms_buzzer));
+      //Serial.println("bz: " + String(ms_buzzer));
       if (ms_buzzer >= 10) {
         flag_NewGame = true;
         reset_AllVariables();
